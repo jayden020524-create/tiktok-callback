@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TikTok 授权回调</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+         max-width: 720px; margin: 48px auto; padding: 0 20px; color: #1a1a1a; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  p.sub { color: #666; margin-top: 0; font-size: 14px; }
+  label { display: block; margin-top: 24px; font-weight: 600; font-size: 14px; }
+  textarea, input { width: 100%; box-sizing: border-box; margin-top: 8px; padding: 12px;
+                    font-family: ui-monospace, Consolas, monospace; font-size: 13px;
+                    border: 1px solid #d0d0d0; border-radius: 6px; background: #fafafa; }
+  textarea { height: 96px; resize: vertical; }
+  button { margin-top: 10px; padding: 8px 16px; font-size: 14px; border: 0;
+           border-radius: 6px; background: #1a1a1a; color: #fff; cursor: pointer; }
+  button:active { transform: translateY(1px); }
+  .ok { background: #e8f5e9; border-color: #a5d6a7 !important; }
+  .warn { color: #b3261e; font-size: 13px; margin-top: 12px; }
+  .hint { color: #666; font-size: 13px; line-height: 1.7; margin-top: 28px;
+          border-top: 1px solid #eee; padding-top: 16px; }
+  code { background: #f0f0f0; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>TikTok 授权回调</h1>
+<p class="sub">授权完成后，TikTok 会把授权码拼在本页地址后面。</p>
+
+<label>授权码 auth_code</label>
+<textarea id="code" readonly placeholder="地址里没有找到 auth_code"></textarea>
+<button onclick="copyCode()">复制授权码</button>
+
+<label>完整回调地址（含 state）</label>
+<input id="full" readonly>
+<button onclick="copyFull()">复制整条地址</button>
+
+<p class="warn" id="warn"></p>
+
+<div class="hint">
+  <strong>怎么用：</strong><br>
+  1. 点上面的「复制整条地址」<br>
+  2. 回到电脑，运行：<code>python ads_auth.py exchange "粘贴到这里"</code><br>
+  3. 脚本会自动提取授权码并换取 Token<br><br>
+  本页不含任何密钥，只做展示。授权码有效期很短（通常 10 分钟内用完）。
+</div>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var code = params.get('auth_code') || params.get('code') || '';
+  var state = params.get('state') || '';
+  var err = params.get('error') || '';
+
+  var codeBox = document.getElementById('code');
+  var fullBox = document.getElementById('full');
+  var warn = document.getElementById('warn');
+
+  codeBox.value = code;
+  fullBox.value = location.href;
+  if (code) { codeBox.classList.add('ok'); }
+
+  if (err) {
+    warn.textContent = '授权失败，错误信息：' + err;
+  } else if (!code) {
+    warn.textContent = '地址里没有 auth_code。可能授权被取消，或回调地址不匹配。';
+  }
+  if (state) { fullBox.dataset.state = state; }
+})();
+
+function copyCode() {
+  var el = document.getElementById('code');
+  el.select(); el.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(el.value).catch(function(){ document.execCommand('copy'); });
+  flash('已复制授权码');
+}
+function copyFull() {
+  var el = document.getElementById('full');
+  el.select(); el.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(el.value).catch(function(){ document.execCommand('copy'); });
+  flash('已复制整条地址');
+}
+function flash(msg) {
+  var w = document.getElementById('warn');
+  var old = w.textContent;
+  w.textContent = msg;
+  w.style.color = '#2e7d32';
+  setTimeout(function () { w.textContent = old; w.style.color = '#b3261e'; }, 1500);
+}
+</script>
+</body>
+</html>
